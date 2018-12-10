@@ -1,0 +1,207 @@
+<apex:page controller="ContactsManagerController">
+    <apex:slds />
+    <apex:stylesheet value="{!$Resource.ContactsManagerStyle}" />
+    <apex:form id="form">
+        <!--Popup section-->
+        <apex:outputPanel rendered="{! isPopupOpened }" id="popup-panel">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="z-index:9001;">
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <apex:panelGrid columns="2">
+                            First Name<apex:inputText value="{!firstName}" styleClass="slds-input" />
+                            Last Name*<apex:inputText value="{!lastName}" styleClass="slds-input" />
+                            Email*<apex:inputText value="{!email}" styleClass="slds-input" />
+                            Account<apex:inputText value="{!account}" styleClass="slds-input" />
+                            Contact Level
+                            <apex:selectList value="{!selectedLevel}" size="1" styleClass="slds-select">
+                                <apex:selectOptions value="{!levels}" />
+                            </apex:selectList>
+                        </apex:panelGrid>
+                        <div class="notification">* records required for filling</div>
+                        <apex:pageMessages />
+                    </div>
+                	<div align="center">
+                        <apex:commandButton reRender="{!IF(refresh, 'popup-panel', '')}" action="{!save}"
+                                            value="Save" styleClass="slds-button slds-button_neutral" />
+                		<apex:commandButton reRender="form" action="{!closePopup}" value="Close"
+                                            immediate="true" styleClass="slds-button slds-button_neutral" />
+                	</div>
+                </div>
+            </section>
+        	<div class="slds-backdrop slds-backdrop_open"></div>
+        </apex:outputPanel>
+        <!--main page section-->
+        <apex:outputPanel id="main-panel">
+            <apex:pageBlock title="Contacts Manager">
+                <div class="slds-scope slds-box">
+                	<div class="top-control">
+                        <!--select view / pagination-->
+                        <span>
+                            View&nbsp;
+                            <apex:SelectList title="pagination" value="{!navigationType}"
+                                             size="1" styleClass="slds-select" style="width: 71%;">
+                                <apex:selectOptions value="{!PageView}" />
+                                <apex:actionSupport reRender="main-panel" event="onchange">
+                                </apex:actionSupport>
+                            </apex:SelectList>
+                        </span>
+                        <!--search function-->
+                        <span>
+                        	<apex:inputText title="Search by name or surname..." value="{!paramSearch}" styleClass="slds-input" style="width: 71%;">
+                                <apex:actionSupport action="{!searchWord}" event="onselect" />
+                            </apex:inputText>
+                            <apex:commandButton action="{!searchWord}" value="Search" status="SearchStatus"
+                                                styleClass="slds-button slds-button_neutral" />
+                        </span>
+                        <!--create new contact (open popup)-->
+                        <span>
+                        	<apex:commandButton reRender="form" action="{!openPopup}" value="New Contact"
+                                                title="Create" styleClass="slds-button slds-button_neutral"/>
+                        </span>
+                    </div>
+                    <!--table of contacts list-->
+                    <apex:pageBlockTable value="{!Contact}" var="cont" id="contact-table">
+                        <apex:column value="{!cont.Name}">
+                            <apex:facet name="header">
+                                <apex:commandLink action="{!sortColumn}" title="sort by name" reRender="main-panel">
+                                    <apex:outputText value="Name" />
+                                    <apex:param value="Name" name="fieldName" assignTo="{!paramSort}" />
+                                </apex:commandLink>
+                            </apex:facet>
+                        </apex:column>
+                        <apex:column value="{!cont.Email}">
+                            <apex:facet name="header">
+                                <apex:commandLink action="{!sortColumn}" title="sort by email" reRender="main-panel">
+                                    <apex:outputText value="Email" />
+                                    <apex:param value="Email" name="fieldName" assignTo="{!paramSort}" />
+                                </apex:commandLink>
+                            </apex:facet>
+                        </apex:column>
+                        <apex:column value="{!cont.Contact_Level__c}">
+                            <apex:facet name="header">
+                                <apex:commandLink action="{!sortColumn}" title="sort by level" reRender="main-panel">
+                                    <apex:outputText value="Contact Level" />
+                                    <apex:param value="Contact_Level__c" name="fieldName" assignTo="{!paramSort}" />
+                                </apex:commandLink>
+                            </apex:facet>
+                        </apex:column>
+                        <apex:column value="{!cont.AccountId}">
+                            <apex:facet name="header">
+                                <apex:commandLink action="{!sortColumn}" title="sort by account" reRender="main-panel">
+                                    <apex:outputText value="Accounts" />
+                                    <apex:param value="AccountId" name="fieldName" assignTo="{!paramSort}" />
+                                </apex:commandLink>
+                            </apex:facet>
+                        </apex:column>
+                        <apex:column value="{!cont.OwnerId}">
+                            <apex:facet name="header">
+                                <apex:commandLink action="{!sortColumn}" title="sort by owner" reRender="main-panel">
+                                    <apex:outputText value="Owners" />
+                                    <apex:param value="OwnerId" name="fieldName" assignTo="{!paramSort}" />
+                                </apex:commandLink>
+                            </apex:facet>
+                        </apex:column>
+                        <apex:column value="{!cont.CreatedById}">
+                            <apex:facet name="header">
+                                <apex:commandLink action="{!sortColumn}" title="sort by creator" reRender="main-panel">
+                                    <apex:outputText value="Created By" />
+                                    <apex:param value="CreatedById" name="fieldName" assignTo="{!paramSort}" />
+                                </apex:commandLink>
+                            </apex:facet>
+                        </apex:column>
+                        <apex:column value="{!cont.CreatedDate}">
+                            <apex:facet name="header">
+                                <apex:commandLink action="{!sortColumn}" title="sort by date" reRender="main-panel">
+                                    <apex:outputText value="Created Date" />
+                                    <apex:param value="CreatedDate" name="fieldName" assignTo="{!paramSort}" />
+                                </apex:commandLink>
+                            </apex:facet>
+                        </apex:column>
+                        <apex:column headerValue="Action">
+                            <apex:commandButton action="{!deleteContact}" value="Delete" reRender="main-panel"
+                                styleClass="slds-button slds-button_neutral">
+                                <apex:param value="{!cont.Id}" name="delete" assignTo="{!selectedContactId}" />
+                            </apex:commandButton>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                    <apex:outputPanel id="nav-panel">
+                        <!--arrow navigation-->
+                        <apex:outputPanel rendered="{!navigationType == 'arrow'}" styleClass="top">
+                            <span></span>
+                            <apex:commandButton value="First" action="{!switchPage}" reRender="main-panel"
+                                                styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                <apex:param value="1" assignTo="{!paramSwitch}" />
+                            </apex:commandButton>
+                            <span>
+                                <span style="visibility: {!IF(defContacts.HasPrevious, 'visible', 'hidden')};">
+                                    Pages {!PageNumber - 1} . Contacts {!previousNumberOfRecords}&nbsp;
+                                    <apex:commandButton action="{!back}" reRender="main-panel" value="<Previous" status="PaginationStatus"
+                                        styleClass="slds-button slds-button_neutral" style="width: 100px;" />
+                                </span>
+                                <span style="visibility: {!IF(defContacts.HasNext, 'visible', 'hidden')};">
+                                    <apex:commandButton action="{!forward}" reRender="main-panel" value="Next>"
+                                        status="PaginationStatus" styleClass="slds-button slds-button_neutral" style="width: 100px;" />
+                                    &nbsp;Pages {!QuantityOfPages - PageNumber} . Contacts 
+                                    {!MaxNumberOfRecords - previousNumberOfRecords - pagination}
+                                </span>
+                            </span>
+                            <apex:commandButton value="Last" action="{!switchPage}" reRender="main-panel"
+                                                styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                <apex:param value="{!QuantityOfPages}" assignTo="{!paramSwitch}" />
+                            </apex:commandButton>
+                            <span></span>
+                        </apex:outputPanel>
+                        <!--carousel navigation-->
+                        <apex:outputPanel styleClass="bottom-control" rendered="{!navigationType == 'carousel'}">
+                            <span></span>
+                            <apex:commandButton value="First" action="{!switchPage}" reRender="main-panel"
+                                                styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                <apex:param value="1" assignTo="{!paramSwitch}" />
+                            </apex:commandButton>
+                            <span>
+                                <apex:commandButton value="{!PageNumber - 3}" action="{!switchPage}" reRender="main-panel"
+                                                    style="visibility: {!IF(PageNumber > 3, 'visible', 'hidden')};"
+                                                    styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                    <apex:param value="{!PageNumber - 3}" assignTo="{!paramSwitch}" />
+                                </apex:commandButton>
+                                <apex:commandButton value="{!PageNumber - 2}" action="{!switchPage}" reRender="main-panel"
+                                                    style="visibility: {!IF(PageNumber > 2, 'visible', 'hidden')};"
+                                                    styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                    <apex:param value="{!PageNumber - 2}" assignTo="{!paramSwitch}" />
+                                </apex:commandButton>
+                                <apex:commandButton value="{!PageNumber - 1}" action="{!switchPage}" reRender="main-panel"
+                                                    style="visibility: {!IF(PageNumber > 1, 'visible', 'hidden')};"
+                                                    styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                    <apex:param value="{!PageNumber - 1}" assignTo="{!paramSwitch}" />
+                                </apex:commandButton>
+                                <apex:commandButton value="{!PageNumber}" styleClass="slds-button slds-button_brand"
+                                                    status="PaginationStatus" />
+                                <apex:commandButton value="{!PageNumber + 1}" action="{!switchPage}" reRender="main-panel"
+                                                    style="visibility: {!IF(PageNumber < QuantityOfPages, 'visible', 'hidden')};"
+                                                    styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                    <apex:param value="{!PageNumber + 1}" assignTo="{!paramSwitch}" />
+                                </apex:commandButton>
+                                <apex:commandButton value="{!PageNumber + 2}" action="{!switchPage}" reRender="main-panel"
+                                                    style="visibility: {!IF(PageNumber + 1 < QuantityOfPages, 'visible', 'hidden')};"
+                                                    styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                    <apex:param value="{!PageNumber + 2}" assignTo="{!paramSwitch}" />
+                                </apex:commandButton>
+                                <apex:commandButton value="{!PageNumber + 3}" action="{!switchPage}" reRender="main-panel"
+                                                    style="visibility: {!IF(PageNumber + 2 < QuantityOfPages, 'visible', 'hidden')};"
+                                                    styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                    <apex:param value="{!PageNumber + 3}" assignTo="{!paramSwitch}" />
+                                </apex:commandButton>
+                            </span>    
+                            <apex:commandButton value="Last" action="{!switchPage}" reRender="main-panel"
+                                                styleClass="slds-button slds-button_neutral" status="PaginationStatus">
+                                <apex:param value="{!QuantityOfPages}" assignTo="{!paramSwitch}" />
+                            </apex:commandButton>
+                            <span></span>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </div>
+            </apex:pageBlock>
+        </apex:outputPanel>       
+    </apex:form>
+</apex:page>
