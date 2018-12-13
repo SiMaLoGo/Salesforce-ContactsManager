@@ -1,6 +1,4 @@
 public with sharing class ContactsManagerController {
-    // determines is list of contacts sorted
-    public Boolean isSorted {get; set;}
     // determines is popup opened
     public Boolean isPopupOpened {get; set;}
     // determines whether to refresh a form in popup
@@ -36,18 +34,14 @@ public with sharing class ContactsManagerController {
     public String account {get; set;}
     // available values of Contact Level
     public List<SelectOption> levels {get; set;}
-    // list of Contacts (database query)
-    public List<Contact> listContacts = new List<Contact>();
     
     public ApexPages.StandardSetController defContacts {
         get {
             if(defContacts == Null) {
-                isSorted = false;
-                defContacts = new ApexPages.StandardSetController(listContacts);
+                defContacts = new ApexPages.StandardSetController(Database.query(dbQuery));
             }
             
             if(PageSize == Null) navigationType = 'All';
-            //PageSize = 10000;
 
             defContacts.setPageSize(PageSize);
             return defContacts;
@@ -73,8 +67,8 @@ public with sharing class ContactsManagerController {
         pagination = 10;
         previousNumberOfRecords = 0;
         order = true;
-        listContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact];
-        dbQuery = 'SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact ORDER BY ';
+        dbQuery = 'SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact';
+        currentQuery = dbQuery;
         levels = new List<SelectOption>();
         levels.add(new SelectOption('Primary', 'Primary'));
         levels.add(new SelectOption('Secondary', 'Secondary'));
@@ -157,13 +151,10 @@ public with sharing class ContactsManagerController {
     }
 
     // search a word in FirstName or LastName of the Contacts
-    public void searchWord() {
-        if(paramSearch != null) paramSearch = paramSearch.trim();
-        
-        listContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate
-                       FROM Contact WHERE (Name LIKE:('%' + paramSearch + '%') OR LastName LIKE:('%' + paramSearch + '%'))];
-        defContacts = new ApexPages.StandardSetController(listContacts);
-        isSorted = false;
+    public void searchName() {
+        paramSearch = paramSearch.trim();
+        currentQuery = dbQuery + ' WHERE (Name LIKE\'%' + paramSearch + '%\') OR (LastName LIKE\'%' + paramSearch + '%\')';
+        defContacts = new ApexPages.StandardSetController(Database.query(currentQuery));
     }
     
     public void openPopup() {
@@ -171,8 +162,7 @@ public with sharing class ContactsManagerController {
     }
     
     public void closePopup() {
-        if(isSorted) defContacts = new ApexPages.StandardSetController(Database.query(currentQuery));
-        else defContacts = new ApexPages.StandardSetController(listContacts);
+        defContacts = new ApexPages.StandardSetController(Database.query(currentQuery));
         
         previousNumberOfRecords = 0;
         isPopupOpened = false;
@@ -276,8 +266,7 @@ public with sharing class ContactsManagerController {
         if(selectedContactId != Null) {
             delete [SELECT Id FROM Contact WHERE Id =: selectedContactId];
             
-            if(isSorted) defContacts = new ApexPages.StandardSetController(Database.query(currentQuery));
-            else defContacts = new ApexPages.StandardSetController(listContacts);
+            defContacts = new ApexPages.StandardSetController(Database.query(currentQuery));
             
             previousNumberOfRecords = 0;
             selectedContactId = Null;
@@ -285,18 +274,18 @@ public with sharing class ContactsManagerController {
     }
     
     // sort a Contact list by a field
-    public void sortColumn() {       
+    public void sortColumn() {
+        // DESC only when re-click column
         if(!order && (paramSort == oldValue)) {
-            currentQuery = dbQuery + paramSort + ' DESC';
+            currentQuery = dbQuery + ' ORDER BY ' + paramSort + ' DESC';
             defContacts = new ApexPages.StandardSetController(Database.query(currentQuery));
         } else {
-            currentQuery = dbQuery + paramSort;
+            currentQuery = dbQuery + ' ORDER BY ' + paramSort;
             defContacts = new ApexPages.StandardSetController(Database.query(currentQuery));
         }
         
         order = !order;
         oldValue = paramSort;
-        isSorted = true;
         previousNumberOfRecords = 0;
 	}
 }
