@@ -67,15 +67,14 @@ private class Test_ContactsManagerController {
         Test.setCurrentPage(Page.ContactsManager);
         List<SelectOption> testVue = getVue();
         List<SelectOption> testLevels = getLevels();
-        List<Contact> testListContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact];
-        String testQuery = 'SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact ORDER BY ';
-        ApexPages.StandardSetController testDef = new ApexPages.StandardSetController(testListContacts);
-        testDef.setSelected(testListContacts);
+        String testQuery = 'SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact';
+        String testCurrentQuery = testQuery;
+        ApexPages.StandardSetController testDef = new ApexPages.StandardSetController(Database.query(testQuery));
+        testDef.setSelected(Database.query(testQuery));
         ContactsManagerController cmc = new ContactsManagerController();
         
-        System.assertEquals(records, testListContacts.size());
         System.assertEquals(testQuery, cmc.dbQuery, 'dbQuery is invalid');
-        System.assertEquals(Null, cmc.isSorted, 'isSorted isn\'t Null');
+        System.assertEquals(testCurrentQuery, cmc.currentQuery, 'currentQuery is invalid');
         System.assertEquals(Null, cmc.isPopupOpened, 'isPopupOpened isn\'t Null');
         System.assertEquals(Null, cmc.refresh, 'refresh isn\'t Null');
         System.assert(cmc.order, 'order isn\'t true');
@@ -90,7 +89,6 @@ private class Test_ContactsManagerController {
         System.assertEquals(Null, cmc.email, 'email isn\'t Null');
         System.assertEquals(Null, cmc.account, 'account isn\'t Null');
         System.assertEquals(testLevels, cmc.levels, 'ContactLevels is invalid');
-        System.assertEquals(testListContacts, cmc.listContacts, 'listContacts is invalid');
         System.assertNotEquals(Null, cmc.defContacts, 'StandardSetController is invalid');
         System.assertEquals('All', cmc.navigationType, 'navigationType not All');
         System.assertEquals(10000, cmc.PageSize, 'PageSize isn\'t equals 10000');
@@ -117,15 +115,14 @@ private class Test_ContactsManagerController {
         Test.setCurrentPage(Page.ContactsManager);
         List<SelectOption> testVue = getVue();
         List<SelectOption> testLevels = getLevels();
-        List<Contact> testListContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact];
-        String testQuery = 'SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact ORDER BY ';
-        ApexPages.StandardSetController testDef = new ApexPages.StandardSetController(testListContacts);
-        testDef.setSelected(testListContacts);
+        String testQuery = 'SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact';
+        String testCurrentQuery = testQuery;
+        ApexPages.StandardSetController testDef = new ApexPages.StandardSetController(Database.query(testQuery));
+        testDef.setSelected(Database.query(testQuery));
         ContactsManagerController cmc = new ContactsManagerController();
         
-        System.assertEquals(records, testListContacts.size());
         System.assertEquals(testQuery, cmc.dbQuery, 'dbQuery is invalid');
-        System.assertEquals(Null, cmc.isSorted, 'isSorted isn\'t Null');
+        System.assertEquals(testCurrentQuery, cmc.currentQuery, 'currentQuery is invalid');
         System.assertEquals(Null, cmc.isPopupOpened, 'isPopupOpened isn\'t Null');
         System.assertEquals(Null, cmc.refresh, 'refresh isn\'t Null');
         System.assert(cmc.order, 'order isn\'t true');
@@ -140,7 +137,6 @@ private class Test_ContactsManagerController {
         System.assertEquals(Null, cmc.email, 'email isn\'t Null');
         System.assertEquals(Null, cmc.account, 'account isn\'t Null');
         System.assertEquals(testLevels, cmc.levels, 'ContactLevels is invalid');
-        System.assertEquals(testListContacts, cmc.listContacts, 'listContacts is invalid');
         System.assertNotEquals(Null, cmc.defContacts, 'StandardSetController is invalid');
         System.assertEquals('All', cmc.navigationType, 'navigationType not All');
         System.assertEquals(10000, cmc.PageSize, 'PageSize isn\'t equals 10000');
@@ -195,21 +191,20 @@ private class Test_ContactsManagerController {
         System.assertEquals(10, cmc.PageSize, 'PageSize isn\'t equals 10');
         
         // search
-        cmc.paramSearch = ' ol ';
-        cmc.searchWord();
-        testListContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate
-                       FROM Contact WHERE (Name LIKE:'ol') OR (LastName LIKE:'ol')];
-        testDef = new ApexPages.StandardSetController(testListContacts);
-        System.assertEquals('ol', cmc.paramSearch, 'paramSearch not trimed');
-        System.assertEquals(testListContacts, cmc.listContacts, 'listContacts is invalid');
+        cmc.paramSearch = ' ame2 ';
+        cmc.searchName();
+        testCurrentQuery = testQuery + ' WHERE (Name LIKE\'%ame2%\') OR (LastName LIKE\'%ame2%\')';
+        testDef = new ApexPages.StandardSetController(Database.query(testCurrentQuery));
+
+        System.assertEquals('ame2', cmc.paramSearch, 'paramSearch not trimed');
+        System.assertEquals(testCurrentQuery, cmc.currentQuery, 'currentQuery is invalid');
         System.assertNotEquals(Null, cmc.defContacts, 'defContacts is invalid');
         
         // sort
         cmc.paramSort = 'Name';
         Boolean last = cmc.order;
         cmc.sortColumn();
-        System.assert(cmc.isSorted, 'isSorted isn\'t true');
-        System.assertEquals(testQuery + 'Name', cmc.currentQuery, 'currentQuery is invalid');
+        System.assertEquals(testQuery + ' ORDER BY ' + cmc.paramSort, cmc.currentQuery, 'currentQuery is invalid');
         System.assertEquals(cmc.paramSort, cmc.oldValue, 'oldValue is invalid');
         System.assertNotEquals(last, cmc.order, 'order wasn\'t changed');
         last = cmc.order;
@@ -217,8 +212,7 @@ private class Test_ContactsManagerController {
         // sort DESC
         cmc.paramSort = 'Name';
         cmc.sortColumn();
-        System.assert(cmc.isSorted, 'isSorted isn\'t true');
-        System.assertEquals(testQuery + cmc.paramSort + ' DESC', cmc.currentQuery, 'currentQuery is invalid');
+        System.assertEquals(testQuery + ' ORDER BY ' + cmc.paramSort + ' DESC', cmc.currentQuery, 'currentQuery is invalid');
         System.assertEquals(cmc.paramSort, cmc.oldValue, 'oldValue is invalid');
         System.assertNotEquals(last, cmc.order, 'order wasn\'t changed');
         System.assertEquals(0, cmc.previousNumberOfRecords, 'previousNumberOfRecords isn\'t equals 0');
@@ -235,27 +229,14 @@ private class Test_ContactsManagerController {
         Test.startTest();
         Test.setCurrentPage(Page.ContactsManager);
         List<SelectOption> testVue = getVue();
-        List<Contact> testListContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact];
-        String testdbQuery = 'SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact ORDER BY ';
-        ApexPages.StandardSetController testDef = new ApexPages.StandardSetController(testListContacts);
-        testDef.setSelected(testListContacts);
+        List<SelectOption> testLevels = getLevels();
+        String testQuery = 'SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact';
+        String testCurrentQuery = testQuery;
+        ApexPages.StandardSetController testDef = new ApexPages.StandardSetController(Database.query(testQuery));
+        testDef.setSelected(Database.query(testQuery));
         ContactsManagerController cmc = new ContactsManagerController();
         cmc.navigationType = 'arrow';
-        
-        // delete not sorted
-        Contact testDelCont = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact LIMIT 1];
-        cmc.selectedContactId = testDelCont.Id;
-        cmc.isSorted = false;
-        cmc.deleteContact();
-        testListContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact];
-        testDef = new ApexPages.StandardSetController(testListContacts);
-        List<Contact> checkList = [SELECT Name FROM Contact WHERE Id =: testDelCont.Id];
-        testListContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact];
-        System.assertEquals(0, checkList.size(), 'Contact wasn\'t deleted');
-        System.assertEquals(--records, testListContacts.size(), 'Contact wasn\'t deleted');
-        System.assertEquals(0, cmc.previousNumberOfRecords, 'previousNumberOfRecords != 0');
-        System.assertEquals(Null, cmc.selectedContactId, 'selectedContactId != Null');
-        
+
          // open popup
         cmc.openPopup();
         System.assert(cmc.isPopupOpened, 'isPopupOpened isn\'t true');
@@ -263,12 +244,25 @@ private class Test_ContactsManagerController {
         cmc.closePopup();
         System.assert(!cmc.isPopupOpened, 'Popup not closed');
         
-        // delete sorted
+        // delete not sorted
+        Contact testDelCont = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact LIMIT 1];
+        cmc.selectedContactId = testDelCont.Id;
+        cmc.deleteContact();
+        testDef = new ApexPages.StandardSetController(Database.query(testCurrentQuery));
+        List<Contact> checkList = [SELECT Name FROM Contact WHERE Id =: testDelCont.Id];
+        List<Contact> testListContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact];
+        System.assertEquals(0, checkList.size(), 'Contact wasn\'t deleted');
+        System.assertEquals(--records, testListContacts.size(), 'Contact wasn\'t deleted');
+        System.assertEquals(0, cmc.previousNumberOfRecords, 'previousNumberOfRecords != 0');
+        System.assertEquals(Null, cmc.selectedContactId, 'selectedContactId != Null');
+        
+        // sort
         cmc.paramSort = 'Email';
         cmc.sortColumn();
+        // delete sorted
         testDelCont = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact ORDER BY Email LIMIT 1];
         cmc.selectedContactId = testDelCont.Id;
-        testDef = new ApexPages.StandardSetController(Database.query(testdbQuery + 'Email'));
+        testDef = new ApexPages.StandardSetController(Database.query(testCurrentQuery + ' ORDER BY ' + cmc.paramSort));
         cmc.deleteContact();
         checkList = [SELECT Name FROM Contact WHERE Id =: testDelCont.Id];
         testListContacts = [SELECT Name, Email, Contact_Level__c, AccountId, OwnerId, CreatedById, CreatedDate FROM Contact];
