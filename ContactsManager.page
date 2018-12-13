@@ -8,25 +8,28 @@
                      aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
                 <div class="slds-modal__container" style="z-index:9001;">
                     <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
-                        <apex:panelGrid columns="2">
-                            First Name<apex:inputText value="{!firstName}" styleClass="slds-input" />
-                            Last Name*<apex:inputText value="{!lastName}" styleClass="slds-input" />
-                            Email*<apex:inputText value="{!email}" styleClass="slds-input" />
-                            Account<apex:inputText value="{!account}" styleClass="slds-input" />
-                            Contact Level
-                            <apex:selectList value="{!selectedLevel}" size="1" styleClass="slds-select">
-                                <apex:selectOptions value="{!levels}" />
-                            </apex:selectList>
-                        </apex:panelGrid>
-                        <div class="notification">* records required for filling</div>
-                        <apex:pageMessages />
+                        <apex:pageBlock >
+                            <apex:pageBlockSection columns="2">
+                                First Name<apex:inputText value="{!firstName}" styleClass="slds-input" />
+                                Last Name*<apex:inputText value="{!lastName}" styleClass="slds-input" style="border-left: 2px solid rgba(255,0,0,0.8)" />
+                                Email*<apex:inputText value="{!email}" styleClass="slds-input" style="border-left: 2px solid rgba(255,0,0,0.8)" />
+                                Account<apex:inputText value="{!account}" styleClass="slds-input" />
+                                Contact Level
+                                <apex:selectList value="{!selectedLevel}" size="1" styleClass="slds-select">
+                                    <apex:selectOptions value="{!levels}" />
+                                </apex:selectList>
+                            </apex:pageBlockSection>
+                            <div class="notification">* records required for filling</div>
+                            <apex:pageMessages />
+                        </apex:pageBlock>
+                        <div align="center">
+                            <apex:commandButton reRender="{!IF(refresh, 'popup-panel', '')}" action="{!save}"
+                                                value="Save" styleClass="slds-button slds-button_neutral" />
+                            <apex:commandButton reRender="form" action="{!closePopup}" value="Close"
+                                                immediate="true" styleClass="slds-button slds-button_neutral" />
+                		</div>
                     </div>
-                	<div align="center">
-                        <apex:commandButton reRender="{!IF(refresh, 'popup-panel', '')}" action="{!save}"
-                                            value="Save" styleClass="slds-button slds-button_neutral" />
-                		<apex:commandButton reRender="form" action="{!closePopup}" value="Close"
-                                            immediate="true" styleClass="slds-button slds-button_neutral" />
-                	</div>
+                	
                 </div>
             </section>
         	<div class="slds-backdrop slds-backdrop_open"></div>
@@ -48,10 +51,8 @@
                         </span>
                         <!--search function-->
                         <span>
-                        	<apex:inputText title="Search by name or surname..." value="{!paramSearch}" styleClass="slds-input" style="width: 71%;">
-                                <apex:actionSupport action="{!searchWord}" event="onselect" />
-                            </apex:inputText>
-                            <apex:commandButton action="{!searchWord}" value="Search" status="SearchStatus"
+                        	<apex:inputText title="Search by name or surname..." value="{!paramSearch}" styleClass="slds-input" style="width: 71%;" />
+                            <apex:commandButton action="{!searchName}" value="Search" status="SearchStatus"
                                                 styleClass="slds-button slds-button_neutral" />
                         </span>
                         <!--create new contact (open popup)-->
@@ -127,7 +128,7 @@
                     </apex:pageBlockTable>
                     <apex:outputPanel id="nav-panel">
                         <!--arrow navigation-->
-                        <apex:outputPanel rendered="{!navigationType == 'arrow'}" styleClass="top">
+                        <apex:outputPanel rendered="{!navigationType == 'arrow'}" styleClass="bottom-control">
                             <span></span>
                             <apex:commandButton value="First" action="{!switchPage}" reRender="main-panel"
                                                 styleClass="slds-button slds-button_neutral" status="PaginationStatus">
